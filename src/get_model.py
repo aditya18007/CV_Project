@@ -1,5 +1,7 @@
 import os 
 import wget 
+import torch 
+import numpy as np 
 
 CLIP = 'CLIP'
 
@@ -16,8 +18,24 @@ def get_model(model_name:str):
     if not os.path.exists('Models'):
         os.mkdir('Models')
 
-    if not os.path.exists(f'Models/{model_name}'):
-        wget.download(Links[model_name], out=f'Models/{model_name}.pt')
-    
+    model_filepath = f'Models/{model_name}.pt'
+    if not os.path.exists(model_filepath):
+        wget.download(Links[model_name], out=model_filepath)
+    if model_name == CLIP:
+        if not torch.cuda.is_available():
+            print("Cuda unavailable. This code assumes cuda everywhere.")
+            exit(-1)
+        model = torch.jit.load(model_filepath).cuda().eval()
+        input_resolution = model.input_resolution.item()
+        context_length = model.context_length.item()
+        vocab_size = model.vocab_size.item()
+        print("Loaded CLIP Model")
+        print("Model parameters:", f"{np.sum([int(np.prod(p.shape)) for p in model.parameters()]):,}")
+        print("Input resolution:", input_resolution)
+        print("Context length:", context_length)
+        print("Vocab size:", vocab_size)
+        return model
+
+    return None     
 if __name__ == '__main__':
-    get_model(CLIP)
+    model = get_model(CLIP)
