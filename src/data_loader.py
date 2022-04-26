@@ -3,8 +3,8 @@ from PIL import Image
 import torchvision.transforms as transforms
 import tqdm
 
-from CONST import DATASET_TYPES 
-from one_hot_encoding import one_hot_encode
+from src.CONST import DATASET_TYPES 
+from src.one_hot_encoding import one_hot_encode
 
 def read_data(dataset_type:str):
     if (dataset_type not in DATASET_TYPES):
@@ -14,7 +14,7 @@ def read_data(dataset_type:str):
     with open(f'Data/annotations/{dataset_type}.jsonl', 'r') as json_file:
         json_list = list(json_file)
 
-    data = {}
+    data = []
     
     for json_str in tqdm.tqdm(json_list):
         data_point = json.loads(json_str)
@@ -27,12 +27,15 @@ def read_data(dataset_type:str):
         del data_point['image']
         
         data_point['encoded_labels'] = one_hot_encode(data_point['labels'])
-        data[data_point['id']] = data_point
-    
+        data.append(data_point)
+    #['id', 'labels', 'text', 'image_PIL', 'image_path', 'encoded_labels']
     return data
 
 
 if __name__ == "__main__":
     data = read_data('train')
+    for i in data:
+        print(data[i].keys())
+        break
     data = read_data('test')
     data = read_data('val')

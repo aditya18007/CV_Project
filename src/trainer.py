@@ -71,7 +71,7 @@ class Trainer:
         self.train_loader = train_loader 
         self.val_loader = val_loader
     
-    def train(self):
+    def train(self, debug_model_layers=False):
         
         if not self.all_param_init():
             exit(-1)
@@ -85,7 +85,8 @@ class Trainer:
                 
                 x,y_true = self.input_transformer.transform(x,y)
                 y_hat, y_pred = self.model(x)
-                
+                if debug_model_layers:
+                    return
                 batch_accuracy = accuracy_score(y_pred, y_true)
                 batch_loss = self.loss_fn(y_hat, y_true) + self.model.l2_norm(1e-4)
 
@@ -101,7 +102,6 @@ class Trainer:
             self.Train_results['Accuracies'].append(avg_train_accuracy)
 
             self.model.eval()
-
             val_loss = 0
             val_accuracy = 0 
             with torch.no_grad():

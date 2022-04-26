@@ -1,7 +1,7 @@
 import numpy as np 
 import tqdm 
 import json 
-from CONST import DATASET_TYPES, NUM_LABELS, ONE_HOT_ENCODING
+from src.CONST import DATASET_TYPES, NUM_LABELS, ONE_HOT_ENCODING
 
 def print_encoding_dict():
     Labels = []
