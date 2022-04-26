@@ -11,9 +11,10 @@ EMBEDDING_SIZE = 768
 class unimodal_dBERT_Model(nn.Module):
 
     def __init__(self) -> None:
-        super(unimodal_dBERT_Model).__init__()
+        super().__init__()
         self.distil_BERT = DistilBertModel.from_pretrained(DISTIL_BERT_MODEL)
-        self.distil_BERT.eval()
+        for param in self.distil_BERT.parameters():
+            param.requires_grad = False 
     
     def forward(self, id, mask):
         pooled_output = self.distil_BERT(input_ids=id, attention_mask=mask)
