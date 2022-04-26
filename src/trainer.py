@@ -1,5 +1,12 @@
 import torch 
 from tqdm import tqdm 
+from sklearn.metrics import (
+    accuracy_score, 
+    classification_report,
+    f1_score,
+)
+
+import numpy as np 
 
 class Trainer:
 
@@ -65,11 +72,89 @@ class Trainer:
         self.val_loader = val_loader
     
     def train(self):
+        
+        if not self.all_param_init():
+            exit(-1)
 
         for epoch in range(self.epochs):
+            
             self.model.train()
             train_loss = 0
             train_accuracy = 0
             for x,y in tqdm(self.train_loader):
-                x = self.input_transformer(x)
-                y_hat = self.model(x)
+                
+                x,y_true = self.input_transformer.transform(x,y)
+                y_hat, y_pred = self.model(x)
+                
+                batch_accuracy = accuracy_score(y_pred, y_true)
+                batch_loss = self.loss_fn(y_hat, y_true) + self.model.l2_norm(1e-4)
+
+                train_loss += batch_loss.item()
+                train_accuracy += batch_accuracy.item()
+                batch_loss.backward()
+                self.optimizer.step()
+            
+            avg_train_loss = train_loss / len(self.train_loader)
+            self.Train_results['Losses'].append(avg_train_loss)
+
+            avg_train_accuracy = train_accuracy / len(self.train_loader)
+            self.Train_results['Accuracies'].append(avg_train_accuracy)
+
+            self.model.eval()
+
+            val_loss = 0
+            val_accuracy = 0 
+            with torch.no_grad():
+                for x,y in tqdm(self.val_loader):
+                
+                    x,y_true = self.input_transformer.transform(x,y)
+                    y_hat, y_pred = self.model(x)
+                    
+                    batch_accuracy = accuracy_score(y_pred, y_true)
+                    batch_loss = self.loss_fn(y_hat, y_true)
+
+                    val_accuracy += batch_accuracy.item()
+                    val_loss += batch_loss.item()
+                
+                avg_val_loss = val_loss/len(self.val_loader)
+                self.Validation_results['Losses'].append(avg_val_loss)
+
+                avg_val_acccuracy = val_accuracy/len(self.val_loader)
+                self.Validation_results['Accuracies'].append(avg_val_acccuracy)
+            
+            print("\n")
+            print(f"For epoch = {epoch}")
+            print("Training Loss = {avg_train_loss} | Training Accuracy = {avg_train_accuracy}")
+            print("Validation Loss = {avg_val_loss}|Validation Accuracy = {avg_val_acccuracy}")
+            print("\n")
+
+    def test(self, test_loader):
+        self.model.eval()
+        actual = None 
+        predicted = None 
+
+        with torch.no_grad():           
+            
+            for x,y in tqdm(self.train_loader):
+                #There is only one batch
+                    
+                x,y_true = self.input_transformer.transform(x,y)
+                y_hat, y_pred = self.model(x)
+                
+                if actual is None:
+                    actual = y_true.cpu().detach().numpy()
+                else:
+                    y_true = y_true.cpu().detach().numpy()
+                    actual = np.concatenate( [actual, y_true] )
+                
+                if predicted is None:
+                    predicted = y_pred.cpu().detach().numpy() 
+                else:
+                    y_pred = y_pred.cpu().detach().numpy() 
+                    predicted = np.concatenate( [predicted, y_pred] )
+            
+            print(f"Accuracy Score = {accuracy_score(predicted, actual)}")
+            print(f"Macro F1 score Score = {f1_score(predicted,actual,average='macro')}")
+            print(f"Micro F1 score Score = {f1_score(predicted,actual,average='micro')}")
+            print("Classification Report\n\n")
+            print(classification_report(predicted, actual))
