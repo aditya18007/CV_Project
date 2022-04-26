@@ -6,9 +6,7 @@ from transformers import DistilBertModel
 from transformers import DistilBertTokenizer
 
 from src.CONST import NUM_LABELS
-DISTIL_BERT_MODEL="distilbert-base-uncased"
-MAX_TOKENS = 256
-EMBEDDING_SIZE = 768
+from src.config import DISTIL_BERT_MODEL, MAX_TOKENS, EMBEDDING_SIZE
 
 class unimodal_dBERT_Model(nn.Module):
 
