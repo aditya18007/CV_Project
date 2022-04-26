@@ -11,7 +11,7 @@ def read_data(dataset_type:str):
         print(f"Invalid Dataset type requested ({DATASET_TYPES}). Type must be one of {DATASET_TYPES}")
         exit(-1)
     
-    with open(f'Data/annotations/{dataset_type}.jsonl', 'r') as json_file:
+    with open(f'Data/annotations/{dataset_type}.jsonl', 'r',encoding='utf8') as json_file:
         json_list = list(json_file)
 
     data = []

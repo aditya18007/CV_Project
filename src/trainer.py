@@ -45,7 +45,7 @@ class Trainer:
             print("Set optimizer using instance method Trainer::set_optimizer")
             all_init = False 
         
-        if self.loss_function is None :
+        if self.loss_fn is None :
             print("Set loss_function using instance method Trainer::set_optimizer")
             all_init = False 
 
@@ -65,7 +65,7 @@ class Trainer:
 
     def set_optimizer( self, optimizer, loss_function):
         self.optimizer = optimizer 
-        self.loss_function = loss_function
+        self.loss_fn = loss_function
 
     def set_data(self, train_loader, val_loader):
         self.train_loader = train_loader 
@@ -84,10 +84,10 @@ class Trainer:
             for x,y in tqdm(self.train_loader):
                 
                 x,y_true = self.input_transformer.transform(x,y)
-                y_hat, y_pred = self.model(x)
+                y_hat, y_pred = self.model(*x)
                 if debug_model_layers:
                     return
-                batch_accuracy = accuracy_score(y_pred, y_true)
+                batch_accuracy = accuracy_score(y_pred.cpu().detach().numpy(), y_true.cpu().detach().numpy())
                 batch_loss = self.loss_fn(y_hat, y_true) + self.model.l2_norm(1e-4)
 
                 train_loss += batch_loss.item()
@@ -108,9 +108,9 @@ class Trainer:
                 for x,y in tqdm(self.val_loader):
                 
                     x,y_true = self.input_transformer.transform(x,y)
-                    y_hat, y_pred = self.model(x)
+                    y_hat, y_pred = self.model(*x)
                     
-                    batch_accuracy = accuracy_score(y_pred, y_true)
+                    batch_accuracy = accuracy_score(y_pred.cpu().detach().numpy(), y_true.cpu().detach().numpy())
                     batch_loss = self.loss_fn(y_hat, y_true)
 
                     val_accuracy += batch_accuracy.item()
@@ -124,8 +124,8 @@ class Trainer:
             
             print("\n")
             print(f"For epoch = {epoch}")
-            print("Training Loss = {avg_train_loss} | Training Accuracy = {avg_train_accuracy}")
-            print("Validation Loss = {avg_val_loss}|Validation Accuracy = {avg_val_acccuracy}")
+            print(f"Training Loss = {avg_train_loss} | Training Accuracy = {avg_train_accuracy}")
+            print(f"Validation Loss = {avg_val_loss}|Validation Accuracy = {avg_val_acccuracy}")
             print("\n")
 
     def test(self, test_loader):
@@ -139,7 +139,7 @@ class Trainer:
                 #There is only one batch
                     
                 x,y_true = self.input_transformer.transform(x,y)
-                y_hat, y_pred = self.model(x)
+                y_hat, y_pred = self.model(*x)
                 
                 if actual is None:
                     actual = y_true.cpu().detach().numpy()

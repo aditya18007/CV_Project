@@ -1,9 +1,11 @@
+from matplotlib.pyplot import axis
 import torch
 import pandas as pd 
 import torch.nn as nn 
 from transformers import DistilBertModel
 from transformers import DistilBertTokenizer
 
+from src.CONST import NUM_LABELS
 DISTIL_BERT_MODEL="distilbert-base-uncased"
 MAX_TOKENS = 256
 EMBEDDING_SIZE = 768
@@ -15,12 +17,23 @@ class unimodal_dBERT_Model(nn.Module):
         self.distil_BERT = DistilBertModel.from_pretrained(DISTIL_BERT_MODEL)
         for param in self.distil_BERT.parameters():
             param.requires_grad = False 
-    
+        self.l1 = nn.Sequential(
+            nn.Linear(EMBEDDING_SIZE,NUM_LABELS)
+        )
+        self.sig = nn.Sigmoid()
+
+    def l2_norm(self, r_factor):
+        weights = torch.cat([x.view(-1) for x in self.parameters() if x.requires_grad])
+        return r_factor*torch.norm(weights, 2)
+
     def forward(self, id, mask):
         pooled_output = self.distil_BERT(input_ids=id, attention_mask=mask)
         x = pooled_output.last_hidden_state
-        print(x.shape)
-        return None 
+        x = x[:, 0, :]
+        x = self.l1(x)
+        x = self.sig(x)
+        pred = torch.round(x)
+        return x, pred
 
 class unimodal_dBERT_Dataset(torch.utils.data.Dataset):
 
