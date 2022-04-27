@@ -6,6 +6,13 @@ import tqdm
 from src.CONST import DATASET_TYPES 
 from src.one_hot_encoding import one_hot_encode
 
+import re
+
+def clean_text(text):
+  text = text.replace("\n", " ")
+  text = re.sub(r'^https?:\/\/.*[\r\n]*', '', text, flags=re.MULTILINE)
+  return text
+
 def read_data(dataset_type:str):
     if (dataset_type not in DATASET_TYPES):
         print(f"Invalid Dataset type requested ({DATASET_TYPES}). Type must be one of {DATASET_TYPES}")
@@ -25,7 +32,7 @@ def read_data(dataset_type:str):
         data_point['image_path'] = f"Data/images/{data_point['image']}"
         #Prevent some bad access from generic name
         del data_point['image']
-        
+        data_point['text'] = clean_text(data_point['text'])
         data_point['encoded_labels'] = one_hot_encode(data_point['labels'])
         data.append(data_point)
     #['id', 'labels', 'text', 'image_PIL', 'image_path', 'encoded_labels']
