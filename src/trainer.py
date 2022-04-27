@@ -7,6 +7,7 @@ from sklearn.metrics import (
 )
 
 import numpy as np 
+import matplotlib.pyplot as plt 
 
 class Trainer:
 
@@ -71,7 +72,7 @@ class Trainer:
         self.train_loader = train_loader 
         self.val_loader = val_loader
     
-    def train(self, debug_model_layers=False):
+    def train(self, debug_model_layers=False, l2_r=1e-4):
         
         if not self.all_param_init():
             exit(-1)
@@ -88,7 +89,7 @@ class Trainer:
                 if debug_model_layers:
                     return
                 batch_accuracy = accuracy_score(y_pred.cpu().detach().numpy(), y_true.cpu().detach().numpy())
-                batch_loss = self.loss_fn(y_hat, y_true) + self.model.l2_norm(1e-4)
+                batch_loss = self.loss_fn(y_hat, y_true) + self.model.l2_norm(l2_r)
 
                 train_loss += batch_loss.item()
                 train_accuracy += batch_accuracy.item()
@@ -128,7 +129,39 @@ class Trainer:
             print(f"Validation Loss = {avg_val_loss}|Validation Accuracy = {avg_val_acccuracy}")
             print("\n")
 
-    def test(self, test_loader):
+    def plot(self):
+        SMALL_SIZE = 8
+        MEDIUM_SIZE = 10
+        BIGGER_SIZE = 12
+
+        plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+        plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+        plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+        plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+        plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+        plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+        plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+        Epochs = [i for i in range(self.epochs)]
+
+        plt.figure(figsize=(20,20))
+        plt.plot(Epochs,self.Train_results['Losses'],label = "Training Loss")
+        plt.plot(Epochs,self.Validation_results['Losses'],label = "Validation Loss")
+        plt.title("Loss vs Epoch curve")
+        plt.xlabel("Epoch number")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.show()
+
+        plt.figure(figsize=(20,20))
+        plt.plot(Epochs,self.Train_results['Accuracies'],label = "Training Accuracy")
+        plt.plot(Epochs,self.Validation_results['Accuracies'],label = "Validation Accuracy")
+        plt.title("Accuracy vs Epoch curve")
+        plt.xlabel("Epochs number")
+        plt.ylabel("Accuracy")
+        plt.legend()
+        plt.show() 
+
+    def test(self, test_loader, print_classification_report=False):
         self.model.eval()
         actual = None 
         predicted = None 
@@ -153,8 +186,9 @@ class Trainer:
                     y_pred = y_pred.cpu().detach().numpy() 
                     predicted = np.concatenate( [predicted, y_pred] )
             
-            print(f"Accuracy Score = {accuracy_score(predicted, actual)}")
-            print(f"Macro F1 score Score = {f1_score(predicted,actual,average='macro')}")
-            print(f"Micro F1 score Score = {f1_score(predicted,actual,average='micro')}")
-            print("Classification Report\n\n")
-            print(classification_report(predicted, actual))
+            print(f"Accuracy Score = {accuracy_score(predicted, actual)*100}")
+            print(f"Macro F1 score Score = {f1_score(predicted,actual,average='macro')*100}")
+            print(f"Micro F1 score Score = {f1_score(predicted,actual,average='micro')*100}")
+            if print_classification_report:
+                print("Classification Report\n\n")
+                print(classification_report(predicted, actual))

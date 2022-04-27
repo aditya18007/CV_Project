@@ -6,7 +6,7 @@ from transformers import DistilBertModel
 from transformers import DistilBertTokenizer
 
 from src.CONST import NUM_LABELS
-from src.config import DISTIL_BERT_MODEL, MAX_TOKENS, EMBEDDING_SIZE
+from src.config import DISTIL_BERT_MODEL, BERT_MAX_TOKENS, BERT_EMBEDDING_SIZE
 
 class unimodal_dBERT_Model(nn.Module):
 
@@ -16,7 +16,8 @@ class unimodal_dBERT_Model(nn.Module):
         for param in self.distil_BERT.parameters():
             param.requires_grad = False 
         self.l1 = nn.Sequential(
-            nn.Linear(EMBEDDING_SIZE,NUM_LABELS)
+            nn.Linear(BERT_EMBEDDING_SIZE,NUM_LABELS),
+            nn.ReLU()
         )
         self.sig = nn.Sigmoid()
 
@@ -36,7 +37,7 @@ class unimodal_dBERT_Model(nn.Module):
 class unimodal_dBERT_Dataset(torch.utils.data.Dataset):
 
     tokenizer_params = { 'padding':'max_length', 
-                         'max_length':MAX_TOKENS, 
+                         'max_length':BERT_MAX_TOKENS, 
                          'truncation':True,
                          'return_tensors':"pt"
                         }

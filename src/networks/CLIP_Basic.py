@@ -4,6 +4,7 @@ from src.CONST import NUM_LABELS
 import torch.nn as nn 
 
 from src.config import CLIP_IMG_EMB_SIZE, CLIP_TEXT_CONTEXT_SIZE, CLIP_IMG_EMB_SIZE, CLIP_TEXT_EMB_SIZE
+
 class CLIP_only_dataset(torch.utils.data.Dataset):
 
     def __init__(self, data) -> None:
@@ -52,7 +53,8 @@ class CLIP_only_Model(nn.Module):
         for param in self.clip.parameters():
             param.requires_grad = False 
         self.l1 = nn.Sequential(
-            nn.Linear(CLIP_IMG_EMB_SIZE + CLIP_TEXT_EMB_SIZE,NUM_LABELS)
+            nn.Linear(CLIP_IMG_EMB_SIZE + CLIP_TEXT_EMB_SIZE,NUM_LABELS),
+            nn.ReLU()
         )
         self.sig = nn.Sigmoid()
 
