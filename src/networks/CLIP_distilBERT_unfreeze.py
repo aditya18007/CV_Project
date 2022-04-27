@@ -8,7 +8,7 @@ from src.config import DISTIL_BERT_MODEL, BERT_MAX_TOKENS, BERT_EMBEDDING_SIZE
 from src.config import CLIP_IMG_EMB_SIZE, CLIP_TEXT_CONTEXT_SIZE, CLIP_IMG_EMB_SIZE, CLIP_TEXT_EMB_SIZE
 import tqdm 
 
-class CLIP_dBERT_dataset(torch.utils.data.Dataset):
+class CLIP_dBERT_unfreezed_layers_dataset(torch.utils.data.Dataset):
     tokenizer_params = { 'padding':'max_length', 
                          'max_length':BERT_MAX_TOKENS, 
                          'truncation':True,
@@ -40,7 +40,7 @@ class CLIP_dBERT_dataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         return (self.tokenized[idx], self.texts[idx],  self.images[idx]), self.labels[idx]
     
-class CLIP_dBERT_Input_transformer:
+class CLIP_dBERT_unfreezed_layers_Input_transformer:
 
     def __init__(self) -> None:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -55,7 +55,7 @@ class CLIP_dBERT_Input_transformer:
         return (id, mask, text_rep_clip, img_rep_clip), y
     
 
-class CLIP_dBERT_Model(nn.Module):
+class CLIP_dBERT_unfreezed_layers_Model(nn.Module):
 
     def __init__(self, clip_model) -> None:
         super().__init__()
@@ -65,6 +65,12 @@ class CLIP_dBERT_Model(nn.Module):
         self.clip = clip_model.cuda()
         for param in self.clip.parameters():
             param.requires_grad = False 
+        
+        for name, param in self.distil_BERT.named_parameters():
+            if ('transformer.layer.5' in name):
+                param.requires_grad = True
+                print(f"Unfreezing - {name}")
+
         self.l1 = nn.Sequential(
             nn.Linear(CLIP_IMG_EMB_SIZE + CLIP_TEXT_EMB_SIZE + BERT_EMBEDDING_SIZE,128),
             nn.Dropout(0.3),
