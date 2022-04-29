@@ -139,13 +139,32 @@ class face_model(nn.Module):
         self.clip = clip_model.cuda()
         for param in self.clip.parameters():
             param.requires_grad = False 
-        self.l1 = nn.Sequential(
-            nn.Linear(FACE_EMBEDDING_SIZE+CLIP_IMG_EMB_SIZE + CLIP_TEXT_EMB_SIZE + BERT_EMBEDDING_SIZE,128),
+
+        self.l_BERT = nn.Sequential(
+            nn.Linear(BERT_EMBEDDING_SIZE,64),
             nn.Dropout(0.3),
-            nn.BatchNorm1d(128),
-            nn.ReLU(),
-            nn.Linear(128,NUM_LABELS)
+            nn.BatchNorm1d(64),
+            nn.ReLU()
+        )   
+
+        self.l_CLIP = nn.Sequential(
+            nn.Linear(CLIP_IMG_EMB_SIZE + CLIP_TEXT_EMB_SIZE,64),
+            nn.Dropout(0.3),
+            nn.BatchNorm1d(64),
+            nn.ReLU()
         )
+
+        self.l_face = nn.Sequential(
+            nn.Linear(FACE_EMBEDDING_SIZE,64),
+            nn.Dropout(0.3),
+            nn.BatchNorm1d(64),
+            nn.ReLU()
+        )
+
+        self.l1 = nn.Sequential(
+            nn.Linear(64 + 64 + 64, NUM_LABELS),
+        )
+
         self.sig = nn.Sigmoid()
 
     def l2_norm(self, r_factor):
@@ -156,10 +175,15 @@ class face_model(nn.Module):
         pooled_output = self.distil_BERT(input_ids=id, attention_mask=mask)
         dBERT_text = pooled_output.last_hidden_state #768
         dBERT_text = dBERT_text[:, 0, :]
-        text_emb_clip = self.clip.encode_text(text_rep_clip) #512
-        image_emb_clip = self.clip.encode_image(img_rep_clip)  #512 
-        x = torch.cat( [dBERT_text, text_emb_clip, image_emb_clip, face_emb], dim=1)
+        text_emb_clip = self.clip.encode_text(text_rep_clip).float() #512
+        image_emb_clip = self.clip.encode_image(img_rep_clip).float()  #512 
+        
+        x_BERT = self.l_BERT( dBERT_text )
+        x_CLIP = self.l_CLIP( torch.cat( [text_emb_clip, image_emb_clip], dim=1) )
+        x_FACE = self.l_face( face_emb )
+
+        x = torch.cat( [x_BERT, x_CLIP, x_FACE ], dim=1 )  
         x = self.l1(x)
         x = self.sig(x)
-        pred = torch.round(x)
+        pred = torch.round(x) 
         return x, pred 
