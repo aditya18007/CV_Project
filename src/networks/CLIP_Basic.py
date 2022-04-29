@@ -38,7 +38,7 @@ class CLIP_only_Input_transformer:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def transform(self,x,y):
-        text_rep = x[0].to(self.device)
+        text_rep = torch.as_tensor(x[0]).long().to(self.device)
         img_rep = x[1].to(self.device)
         y = torch.as_tensor(y).float().to(self.device)
         return (text_rep, img_rep), y

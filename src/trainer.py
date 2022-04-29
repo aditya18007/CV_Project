@@ -187,8 +187,8 @@ class Trainer:
                     predicted = np.concatenate( [predicted, y_pred] )
             
             print(f"Accuracy Score = {accuracy_score(predicted, actual)*100}")
-            print(f"Macro F1 score Score = {f1_score(predicted,actual,average='macro')*100}")
-            print(f"Micro F1 score Score = {f1_score(predicted,actual,average='micro')*100}")
+            print(f"Macro F1 score Score = {f1_score(predicted,actual,average='macro', zero_division=0)*100}")
+            print(f"Micro F1 score Score = {f1_score(predicted,actual,average='micro', zero_division=0)*100}")
             if print_classification_report:
                 print("Classification Report\n\n")
-                print(classification_report(predicted, actual))
+                print(classification_report(predicted, actual, zero_division=0))
