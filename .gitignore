@@ -2,6 +2,7 @@ src/temp.py
 models/*
 # Large Models 
 Models/*
+baseline/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
