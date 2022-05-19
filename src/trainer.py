@@ -168,7 +168,7 @@ class Trainer:
 
         with torch.no_grad():           
             
-            for x,y in tqdm(self.train_loader):
+            for x,y in tqdm(test_loader):
                 #There is only one batch
                     
                 x,y_true = self.input_transformer.transform(x,y)
